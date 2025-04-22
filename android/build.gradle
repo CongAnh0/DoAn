@@ -1,0 +1,29 @@
+buildscript {
+    repositories {
+        google()  // Bắt buộc phải có
+        mavenCentral()  // Bắt buộc phải có
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.3.1'  // Phiên bản phù hợp với Flutter
+        classpath 'com.google.gms:google-services:4.4.2'  // Bắt buộc để sử dụng Firebase
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

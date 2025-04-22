@@ -1,0 +1,2 @@
+C:/Users/vuhoa/study_app/android/app/.cxx/Debug/603v145d/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/vuhoa/study_app/android/app/.cxx/Debug/603v145d/armeabi-v7a/CMakeFiles/rebuild_cache.dir
