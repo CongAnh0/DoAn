@@ -190,6 +190,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  ///////
+
   Widget _buildMenuButton(
       BuildContext context,
       IconData icon,
