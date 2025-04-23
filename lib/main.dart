@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -13,6 +15,7 @@ import 'ui/AI_chat/ai_chat_screen.dart';
 import 'package:study_app/ui/service/auth/login_screen.dart';
 import 'package:study_app/ui/service/auth/auth_service.dart';
 import 'package:study_app/ui/settings/setting_screen.dart';
+import 'package:study_app/ui/settings/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,78 +33,97 @@ void main() async {
       providers: [
         Provider<AuthService>(create: (_) => AuthService()),
         Provider<FriendService>(create: (_) => FriendService()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()), // THÊM DÒNG NÀY
       ],
       child: const MyApp(),
     ),
   );
 }
 
+// PHẦN MyApp - SỬA LẠI NHƯ SAU
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: Colors.purple,
-        scaffoldBackgroundColor: Colors.black,
-      ),
-      home: _AuthWrapper(),
-      routes: {
-        '/home': (context) => const HomeScreen(),
-        '/subjects': (context) {
-          final user = FirebaseAuth.instance.currentUser;
-          if (user == null) {
-            return LoginScreen(
-              onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/subjects'),
-            );
-          }
-          return const CourseListScreen(grade: 1, subject: 'math');
-        },
-        '/ai-chat': (context) {
-          final user = FirebaseAuth.instance.currentUser;
-          if (user == null) {
-            return LoginScreen(
-              onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/ai-chat'),
-            );
-          }
-          return const AiChatScreen();
-        },
-        '/login': (context) => const LoginScreen(),
-        '/settings': (context) {
-          final user = FirebaseAuth.instance.currentUser;
-          if (user == null) {
-            return LoginScreen(
-              onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/settings'),
-            );
-          }
-          return const SettingsScreen();
-        },
-        '/add-friend': (context) {
-          final user = FirebaseAuth.instance.currentUser;
-          if (user == null) {
-            return LoginScreen(
-              onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/add-friend'),
-            );
-          }
-          return const AddFriendScreen();
-        },
-        '/friend-list': (context) {
-          final user = FirebaseAuth.instance.currentUser;
-          if (user == null) {
-            return LoginScreen(
-              onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/friend-list'),
-            );
-          }
-          return const FriendListScreen();
-        },
+    return Consumer<ThemeProvider>( // THÊM Consumer
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            brightness: Brightness.light,
+            primarySwatch: Colors.purple,
+            scaffoldBackgroundColor: Colors.white,
+            bottomNavigationBarTheme: BottomNavigationBarThemeData(
+              backgroundColor: Colors.white,
+            ),
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            primarySwatch: Colors.purple,
+            scaffoldBackgroundColor: Colors.black,
+            bottomNavigationBarTheme: BottomNavigationBarThemeData(
+              backgroundColor: Colors.black,
+            ),
+          ),
+          themeMode: themeProvider.themeMode, // SỬ DỤNG THEME TỪ PROVIDER
+          home: const _AuthWrapper(),
+          routes: { // PHẦN NÀY GIỮ NGUYÊN
+            '/home': (context) => const HomeScreen(),
+            '/subjects': (context) {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null) {
+                return LoginScreen(
+                  onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/subjects'),
+                );
+              }
+              return const CourseListScreen(grade: 1, subject: 'math');
+            },
+            '/ai-chat': (context) {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null) {
+                return LoginScreen(
+                  onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/ai-chat'),
+                );
+              }
+              return const AiChatScreen();
+            },
+            '/login': (context) => const LoginScreen(),
+            '/settings': (context) {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null) {
+                return LoginScreen(
+                  onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/settings'),
+                );
+              }
+              return const SettingsScreen();
+            },
+            '/add-friend': (context) {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null) {
+                return LoginScreen(
+                  onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/add-friend'),
+                );
+              }
+              return const AddFriendScreen();
+            },
+            '/friend-list': (context) {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user == null) {
+                return LoginScreen(
+                  onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/friend-list'),
+                );
+              }
+              return const FriendListScreen();
+            },
+          },
+        );
       },
     );
   }
 }
 
+// PHẦN _AuthWrapper GIỮ NGUYÊN
 class _AuthWrapper extends StatelessWidget {
   const _AuthWrapper();
 
@@ -120,7 +142,7 @@ class _AuthWrapper extends StatelessWidget {
           return const HomeScreen();
         }
 
-        return const HomeScreen(); // Hoặc có thể chuyển hướng đến LoginScreen nếu muốn
+        return const HomeScreen();
       },
     );
   }

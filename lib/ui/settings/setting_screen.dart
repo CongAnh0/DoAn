@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'package:study_app/ui/service/auth/login_screen.dart';
 import 'package:study_app/ui/add_friend/friend_list_screen.dart';
-import 'package:study_app/ui/settings/profile_screen.dart'; // Thêm import này
+import 'package:study_app/ui/settings/profile_screen.dart';
+import 'package:study_app/main.dart';
+import 'package:study_app/ui/settings/theme_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -46,18 +49,10 @@ class SettingsScreen extends StatelessWidget {
           ),
           _buildSettingsItem(
             context,
-            Icons.notifications,
-            'Thông báo',
-            onTap: () {
-              // Xử lý khi nhấn vào Thông báo
-            },
-          ),
-          _buildSettingsItem(
-            context,
             Icons.palette,
             'Giao diện',
             onTap: () {
-              // Xử lý khi nhấn vào Giao diện
+              _showThemeDialog(context);
             },
           ),
           _buildSettingsItem(
@@ -65,7 +60,7 @@ class SettingsScreen extends StatelessWidget {
             Icons.chat,
             'Thiết lập trò chuyện',
             onTap: () {
-              // Xử lý khi nhấn vào Thiết lập trò chuyện
+              // ... existing chat settings code ...
             },
           ),
           _buildSettingsItem(
@@ -118,6 +113,50 @@ class SettingsScreen extends StatelessWidget {
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),
+    );
+  }
+  void _showThemeDialog(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Chọn chế độ giao diện'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<ThemeMode>(
+                title: const Text('Theo hệ thống'),
+                value: ThemeMode.system,
+                groupValue: themeProvider.themeMode,
+                onChanged: (value) {
+                  themeProvider.setThemeMode(value!);
+                  Navigator.pop(context);
+                },
+              ),
+              RadioListTile<ThemeMode>(
+                title: const Text('Sáng'),
+                value: ThemeMode.light,
+                groupValue: themeProvider.themeMode,
+                onChanged: (value) {
+                  themeProvider.setThemeMode(value!);
+                  Navigator.pop(context);
+                },
+              ),
+              RadioListTile<ThemeMode>(
+                title: const Text('Tối'),
+                value: ThemeMode.dark,
+                groupValue: themeProvider.themeMode,
+                onChanged: (value) {
+                  themeProvider.setThemeMode(value!);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

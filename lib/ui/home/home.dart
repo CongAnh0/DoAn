@@ -190,7 +190,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  ///////
 
   Widget _buildMenuButton(
       BuildContext context,
@@ -329,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBottomNavBar() {
     return BottomNavigationBar(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
       selectedItemColor: Colors.purple,
       unselectedItemColor: Colors.grey,
       type: BottomNavigationBarType.fixed,
