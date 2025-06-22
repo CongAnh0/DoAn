@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:study_app/ui/service/auth/auth_service.dart';
+import 'package:study_app/ui/home/home.dart'; // Đảm bảo bạn đã import màn hình chính
 
 class CourseConfirmationScreen extends StatelessWidget {
   final String courseId;
@@ -43,7 +44,20 @@ class CourseConfirmationScreen extends StatelessWidget {
                     try {
                       await Provider.of<AuthService>(context, listen: false)
                           .enrollInCourse(courseId);
-                      Navigator.pop(context, true);
+                      // Sau khi đăng ký xong thì quay về Home và hiển thị thông báo
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomeScreen(),
+                        ),
+                            (Route<dynamic> route) => false,
+                      );
+                      // Hiển thị thông báo sau một khung hình để tránh lỗi context
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Đăng ký khóa học thành công!')),
+                        );
+                      });
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Lỗi: ${e.toString()}')),

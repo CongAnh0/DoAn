@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:study_app/ui/add_friend/friend_service.dart';
 import 'package:study_app/ui/add_friend/add_friend_screen.dart';
+import 'package:study_app/ui/chat/private_chat_screen.dart'; // Thêm import cho màn hình chat
 
 class FriendListScreen extends StatefulWidget {
   const FriendListScreen({super.key});
@@ -77,16 +78,46 @@ class _FriendListScreenState extends State<FriendListScreen> {
               ),
               title: Text(friend['name']),
               subtitle: Text(friend['email']),
-              trailing: _processingFriendId == friend['id']
-                  ? const CircularProgressIndicator()
-                  : IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _removeFriend(friend['id'], friendService),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Thêm nút nhắn tin
+                  IconButton(
+                    icon: const Icon(Icons.message, color: Colors.blue),
+                    onPressed: () => _openChatWithFriend(friend),
+                    tooltip: 'Nhắn tin',
+                  ),
+                  _processingFriendId == friend['id']
+                      ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                      : IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _removeFriend(friend['id'], friendService),
+                    tooltip: 'Hủy kết bạn',
+                  ),
+                ],
               ),
             );
           },
         );
       },
+    );
+  }
+
+  // Hàm để mở màn hình chat với bạn bè được chọn
+  void _openChatWithFriend(Map<String, dynamic> friend) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PrivateChatScreen(
+          friendId: friend['id'],
+          friendName: friend['name'],
+          friendEmail: friend['email'],
+        ),
+      ),
     );
   }
 
@@ -139,6 +170,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
       },
     );
   }
+
   Future<void> _acceptRequest(String requestId, FriendService friendService) async {
     try {
       setState(() => _processingRequestId = requestId);

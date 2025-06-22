@@ -194,6 +194,9 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
     }
   }
 
+  void _navigateToHomePage() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 
   Future<String> _getUserName(String userId) async {
     if (_userNameCache.containsKey(userId)) {

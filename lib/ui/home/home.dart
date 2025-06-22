@@ -4,11 +4,11 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
 import 'package:study_app/ui/service/auth/auth_service.dart';
 import 'package:study_app/ui/subjects/course/grade_selection_screen.dart';
-import 'package:study_app/ui/ai_chat/ai_chat_screen.dart';
 import 'package:study_app/ui/settings/setting_screen.dart';
 import 'package:study_app/ui/service/auth/login_screen.dart';
 import '../chat/chat_list_screen.dart';
 import '../subjects/assignment/assignment_submission_screen.dart';
+import '../subjects/assignment/submitted_assignments_screen.dart';
 import '../subjects/assignment/teacher_grading_screen.dart';
 import '../subjects/course/course_detail_screen.dart';
 import '../subjects/assignment/assignment_screen.dart';
@@ -41,25 +41,127 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Hàm kiểm tra đăng nhập trước khi chuyển màn hình
-  void _navigateWithAuthCheck(BuildContext context, Widget screen) {
+  // Hàm kiểm tra đăng nhập trước khi chuyển màn hình - CẢI TIẾN
+  void _navigateWithAuthCheck(BuildContext context, Widget screen, {bool showLoginOption = true}) {
     if (_user == null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LoginScreen(
-            onLoginSuccess: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => screen),
+      if (showLoginOption) {
+        // Hiển thị dialog lựa chọn cho người dùng
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Yêu cầu đăng nhập'),
+              content: const Text('Bạn cần đăng nhập để sử dụng tính năng này. Bạn có muốn đăng nhập ngay?'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Đóng dialog và ở lại trang chủ
+                  },
+                  child: const Text('Để sau'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Đóng dialog trước
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LoginScreen(
+                          canGoBack: true, // Cho phép quay lại
+                          onLoginSuccess: () {
+                            // Sau khi đăng nhập thành công, quay về trang chủ
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (_) => const HomeScreen()),
+                                  (route) => false,
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Đăng nhập'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // Chuyển trực tiếp đến màn hình đăng nhập
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LoginScreen(
+              canGoBack: true,
+              onLoginSuccess: () {
+                // Sau khi đăng nhập thành công, quay về trang chủ
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      (route) => false,
+                );
+              },
             ),
           ),
-        ),
-      );
+        );
+      }
     } else {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => screen),
       );
+    }
+  }
+
+  // Hàm rời khỏi khóa học
+  Future<void> _leaveCourse(String courseId, String courseTitle) async {
+    // Hiển thị dialog xác nhận
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Xác nhận'),
+          content: Text('Bạn có chắc chắn muốn rời khỏi khóa học "$courseTitle"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Rời khỏi'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && _user != null) {
+      try {
+        // Xóa khỏi userCourses
+        await _dbRef.child('userCourses/${_user.uid}/$courseId').remove();
+
+        // Xóa khỏi danh sách thành viên của khóa học
+        await _dbRef.child('courses/$courseId/members/${_user.uid}').remove();
+
+        // Hiển thị thông báo thành công
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đã rời khỏi khóa học "$courseTitle"'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        // Hiển thị thông báo lỗi
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Có lỗi xảy ra: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -78,15 +180,47 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Home',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.person_add),
-                    onPressed: () {
-                      if (_user == null) {
-                        _navigateWithAuthCheck(context, const Placeholder());
-                      } else {
-                        // Xử lý thêm bạn bè
-                      }
-                    },
+                  Row(
+                    children: [
+                      // Hiển thị trạng thái đăng nhập
+                      if (_user == null)
+                        TextButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LoginScreen(
+                                  canGoBack: true,
+                                  onLoginSuccess: () {
+                                    // Sau khi đăng nhập thành công, quay về trang chủ
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                                          (route) => false,
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.login, size: 16),
+                          label: const Text('Đăng nhập', style: TextStyle(fontSize: 12)),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.blue,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                        )
+                      else
+                        Text(
+                          'Xin chào, ${_user.displayName ?? _user.email ?? 'User'}',
+                          style: const TextStyle(fontSize: 12, color: Colors.green),
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.person_add),
+                        onPressed: () {
+                          _navigateWithAuthCheck(context, const Placeholder());
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -106,29 +240,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     Colors.blue,
                     const GradeSelectionScreen(),
                   ),
-                  _buildMenuButton(
-                    context,
-                    Icons.chat,
-                    'AI Chat',
-                    Colors.green,
-                    const AiChatScreen(),
-                  ),
                   if (_userRole == 'student')
                     _buildMenuButton(
                       context,
                       Icons.grade,
                       'Xem điểm',
                       Colors.teal,
-                      const Placeholder(), // Thay bằng màn hình xem điểm thực tế
+                      const SubmittedAssignmentsScreen(),
                     ),
-                    if (_userRole == 'teacher')
-                      _buildMenuButton(
-                        context,
-                        Icons.grading,
-                        'Chấm điểm',
-                        Colors.deepPurple,
-                        const TeacherGradingScreen(), // Màn hình mới sẽ tạo
-                      ),
+                  if (_userRole == 'teacher')
+                    _buildMenuButton(
+                      context,
+                      Icons.grading,
+                      'Chấm điểm',
+                      Colors.deepPurple,
+                      const TeacherGradingScreen(),
+                    ),
                 ],
               ),
             ),
@@ -167,15 +294,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           _buildCourseList(),
                           _user == null
-                              ? Center(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                _navigateWithAuthCheck(context, const ChatListScreen());
-                              },
-                              child: const Text('Đăng nhập để xem tin nhắn'),
-                            ),
-                          )
-                              : ChatListScreen(),
+                              ? _buildLoginPrompt('Đăng nhập để xem tin nhắn', const ChatListScreen())
+                              : const ChatListScreen(),
                         ],
                       ),
                     ),
@@ -190,6 +310,31 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Widget hiển thị thông báo đăng nhập với tùy chọn
+  Widget _buildLoginPrompt(String message, Widget destination) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.lock_outline, size: 64, color: Colors.grey.shade400),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              _navigateWithAuthCheck(context, destination, showLoginOption: false);
+            },
+            child: const Text('Đăng nhập ngay'),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
 
   Widget _buildMenuButton(
       BuildContext context,
@@ -208,7 +353,6 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(12),
           onTap: () {
             if (requireCourse) {
-              // Nếu là màn hình cần courseId, chúng ta sẽ xử lý trong _buildCourseList
               return;
             }
             _navigateWithAuthCheck(context, destination);
@@ -239,16 +383,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCourseList() {
     return _user == null
-        ? Center(
-      child: ElevatedButton(
-        onPressed: () {
-          _navigateWithAuthCheck(context, const GradeSelectionScreen());
-        },
-        child: const Text('Đăng nhập để xem khóa học'),
-      ),
-    )
+        ? _buildLoginPrompt('Đăng nhập để xem khóa học của bạn', const GradeSelectionScreen())
         : StreamBuilder<DatabaseEvent>(
-      stream: _dbRef.child('userCourses/${_user!.uid}').onValue.asBroadcastStream(),
+      stream: _dbRef.child('userCourses/${_user.uid}').onValue.asBroadcastStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -305,16 +442,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     },
                     trailing: IconButton(
-                      icon: const Icon(Icons.assignment),
+                      icon: const Icon(Icons.exit_to_app, color: Colors.red),
                       onPressed: () {
-                        _navigateWithAuthCheck(
-                          context,
-                          AssignmentScreen(
-                            courseId: courseKey,
-                            userRole: _userRole ?? '',
-                          ),
-                        );
+                        _leaveCourse(courseKey, courseTitle);
                       },
+                      tooltip: 'Rời khỏi khóa học',
                     ),
                   ),
                 );

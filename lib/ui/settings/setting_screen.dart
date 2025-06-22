@@ -57,14 +57,6 @@ class SettingsScreen extends StatelessWidget {
           ),
           _buildSettingsItem(
             context,
-            Icons.chat,
-            'Thiết lập trò chuyện',
-            onTap: () {
-              // ... existing chat settings code ...
-            },
-          ),
-          _buildSettingsItem(
-            context,
             Icons.people,
             'Danh sách bạn bè',
             onTap: () {

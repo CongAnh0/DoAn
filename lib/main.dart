@@ -11,7 +11,6 @@ import 'package:study_app/ui/add_friend/friend_list_screen.dart';
 import 'package:study_app/ui/add_friend/friend_service.dart';
 import 'package:study_app/ui/subjects/course/course_list_screen.dart';
 import 'ui/home/home.dart';
-import 'ui/AI_chat/ai_chat_screen.dart';
 import 'package:study_app/ui/service/auth/login_screen.dart';
 import 'package:study_app/ui/service/auth/auth_service.dart';
 import 'package:study_app/ui/settings/setting_screen.dart';
@@ -78,15 +77,6 @@ class MyApp extends StatelessWidget {
                 );
               }
               return const CourseListScreen(grade: 1, subject: 'math');
-            },
-            '/ai-chat': (context) {
-              final user = FirebaseAuth.instance.currentUser;
-              if (user == null) {
-                return LoginScreen(
-                  onLoginSuccess: () => Navigator.pushReplacementNamed(context, '/ai-chat'),
-                );
-              }
-              return const AiChatScreen();
             },
             '/login': (context) => const LoginScreen(),
             '/settings': (context) {

@@ -9,8 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class AssignmentScreen extends StatefulWidget {
   final String courseId;
-  final String? userRole; // Thêm userRole từ CourseDetailScreen
-
+  final String? userRole;
   const AssignmentScreen({
     super.key,
     required this.courseId,
@@ -24,7 +23,6 @@ class AssignmentScreen extends StatefulWidget {
 class _AssignmentScreenState extends State<AssignmentScreen> {
   List<Map<String, dynamic>> _assignments = [];
   bool _isLoading = true;
-  // THÊM MỚI: Khai báo biến auth
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
@@ -33,7 +31,7 @@ class _AssignmentScreenState extends State<AssignmentScreen> {
     _loadAssignments();
   }
 
-  // PHẦN GIỮ NGUYÊN
+
   Future<void> _loadAssignments() async {
     final dbRef = FirebaseDatabase.instance.ref().child('courses/${widget.courseId}/assignments');
     final snapshot = await dbRef.once();
@@ -217,7 +215,6 @@ class _AssignmentScreenState extends State<AssignmentScreen> {
   }
 }
 
-// PHẦN GIỮ NGUYÊN CÁC LỚP DƯỚI ĐÂY
 class AddEssayAssignmentScreen extends StatefulWidget {
   final String courseId;
 
